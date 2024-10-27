@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PeerID Connection</title>
+    <script src="https://cdn.jsdelivr.net/npm/peerjs@1.3.1/dist/peerjs.min.js"></script>
+</head>
+<body>
+    <h2>PeerID Connection</h2>
+    <h3>Your Peer ID</h3>
+    <input type="text" id="peerId" placeholder="Peer ID will appear here" readonly />
+    <h3>Connect to Peer</h3>
+    <input type="text" id="connectPeerId" placeholder="Enter Peer ID to connect" />
+    <button id="connectBtn">Connect</button>
+    <input type="text" id="message" placeholder="Type a message" />
+    <button id="sendBtn" disabled>Send</button>
+    <div id="messages"></div>
+
+    <script>
+        let peer;
+        let conn;
+
+        // Function to initialize Peer
+        function initializePeer() {
+            if (typeof Peer === 'undefined') {
+                console.error('PeerJS library not loaded. Please check the script source.');
+                return;
+            }
+
+            peer = new Peer(); // Generates a new Peer ID
+
+            peer.on('open', id => {
+                console.log('My peer ID is: ' + id);
+                document.getElementById('peerId').value = id; // Display own Peer ID
+                console.log('Copy this Peer ID to connect another device.');
+            });
+
+            peer.on('connection', connection => {
+                console.log('Connection established with another peer.');
+                conn = connection;
+                setupConnection();
+            });
+
+            peer.on('error', err => {
+                console.error('PeerJS error:', err);
+            });
+        }
+
+        // Function to connect to another peer
+        document.getElementById('connectBtn').onclick = () => {
+            const peerIdToConnect = document.getElementById('connectPeerId').value;
+            conn = peer.connect(peerIdToConnect);
+            setupConnection();
+        };
+
+        // Function to set up connection handling
+        function setupConnection() {
+            conn.on('open', () => {
+                console.log('Connection is open. You can now send messages.');
+                document.getElementById('sendBtn').disabled = false;
+
+                conn.on('data', (data) => {
+                    const messagesDiv = document.getElementById('messages');
+                    messagesDiv.innerHTML += `<p>Received: ${data}</p>`;
+                    console.log('Received message:', data);
+                });
+            });
+
+            conn.on('error', err => {
+                console.error('Connection error:', err);
+            });
+        }
+
+        // Send button functionality
+        document.getElementById('sendBtn').onclick = () => {
+            const message = document.getElementById('message').value;
+            if (!message) {
+                console.error('Cannot send an empty message.');
+                alert('Please enter a message to send.');
+                return;
+            }
+
+            conn.send(message);
+            const messagesDiv = document.getElementById('messages');
+            messagesDiv.innerHTML += `<p>Sent: ${message}</p>`;
+            console.log('Sent message:', message);
+            document.getElementById('message').value = ''; // Clear input after sending
+        };
+
+        // Initialize the peer on page load
+        window.onload = initializePeer;
+    </script>
+</body>
+</html>
