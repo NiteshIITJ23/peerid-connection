@@ -23,56 +23,62 @@
 
         // Initialize Peer with a public STUN server
         function initializePeer() {
-            console.log('Initializing peer...');
-            peer = new Peer();
+            console.log('Initializing peer...'); // Track initialization
+            peer = new Peer({
+                config: {
+                    'iceServers': [
+                        { 'urls': 'stun:stun.l.google.com:19302' }
+                    ]
+                }
+            });
 
             peer.on('open', id => {
-                console.log('Peer opened with ID: ' + id);
+                console.log('Peer opened with ID: ' + id); // Log Peer ID
                 document.getElementById('peerId').value = id; // Display own Peer ID
             });
 
             peer.on('connection', connection => {
-                console.log('Incoming connection from peer.');
+                console.log('Incoming connection from peer.'); // Connection attempt from peer
                 conn = connection;
                 setupConnection();
             });
 
             peer.on('error', err => {
-                console.error('PeerJS error:', err);
+                console.error('PeerJS error:', err); // Handle errors
             });
         }
 
         // Connect to another peer
         document.getElementById('connectBtn').onclick = () => {
             const peerIdToConnect = document.getElementById('connectPeerId').value;
-            console.log('Attempting to connect to peer with ID:', peerIdToConnect);
+            console.log('Attempting to connect to peer with ID:', peerIdToConnect); // Track connection attempt
             conn = peer.connect(peerIdToConnect);
 
             conn.on('open', () => {
-                console.log('Successfully connected to peer:', peerIdToConnect);
+                console.log('Successfully connected to peer:', peerIdToConnect); // Connection successful
                 setupConnection();
             });
 
             conn.on('error', err => {
-                console.error('Connection error:', err);
+                console.error('Connection error:', err); // Connection error
             });
         };
 
         // Setup connection handling
         function setupConnection() {
             conn.on('open', () => {
-                console.log('Connection is open.');
+                console.log('Connection is open. Ready to send messages.'); // Connection established
                 document.getElementById('sendBtn').disabled = false;
 
                 conn.on('data', (data) => {
-                    console.log('Data received:', data);
+                    console.log('Data received:', data); // Data received
                     const messagesDiv = document.getElementById('messages');
                     messagesDiv.innerHTML += `<p>Received: ${data}</p>`;
                 });
             });
 
             conn.on('error', err => {
-                console.error('Connection error:', err);
+                console.error('Connection error during setup:', err); // Error during setup
             });
         }
 
@@ -80,13 +86,13 @@
         document.getElementById('sendBtn').onclick = () => {
             const message = document.getElementById('message').value;
             if (message) {
-                console.log('Sending message:', message);
+                console.log('Sending message:', message); // Message sent
                 conn.send(message);
                 const messagesDiv = document.getElementById('messages');
                 messagesDiv.innerHTML += `<p>Sent: ${message}</p>`;
                 document.getElementById('message').value = ''; // Clear input
             } else {
-                console.warn('Attempted to send an empty message.');
+                console.warn('Attempted to send an empty message.'); // Warn empty message
             }
         };
 
