@@ -23,20 +23,16 @@
 
         // Initialize Peer with a public STUN server
         function initializePeer() {
-            peer = new Peer({
-                config: {
-                    'iceServers': [
-                        { 'urls': 'stun:stun.l.google.com:19302' } // Using a public STUN server
-                    ]
-                }
-            });
+            console.log('Initializing peer...');
+            peer = new Peer();
 
             peer.on('open', id => {
-                console.log('My peer ID is: ' + id);
+                console.log('Peer opened with ID: ' + id);
                 document.getElementById('peerId').value = id; // Display own Peer ID
             });
 
             peer.on('connection', connection => {
+                console.log('Incoming connection from peer.');
                 conn = connection;
                 setupConnection();
             });
@@ -49,16 +45,27 @@
         // Connect to another peer
         document.getElementById('connectBtn').onclick = () => {
             const peerIdToConnect = document.getElementById('connectPeerId').value;
+            console.log('Attempting to connect to peer with ID:', peerIdToConnect);
             conn = peer.connect(peerIdToConnect);
-            setupConnection();
+
+            conn.on('open', () => {
+                console.log('Successfully connected to peer:', peerIdToConnect);
+                setupConnection();
+            });
+
+            conn.on('error', err => {
+                console.error('Connection error:', err);
+            });
         };
 
         // Setup connection handling
         function setupConnection() {
             conn.on('open', () => {
+                console.log('Connection is open.');
                 document.getElementById('sendBtn').disabled = false;
 
                 conn.on('data', (data) => {
+                    console.log('Data received:', data);
                     const messagesDiv = document.getElementById('messages');
                     messagesDiv.innerHTML += `<p>Received: ${data}</p>`;
                 });
@@ -73,10 +80,13 @@
         document.getElementById('sendBtn').onclick = () => {
             const message = document.getElementById('message').value;
             if (message) {
+                console.log('Sending message:', message);
                 conn.send(message);
                 const messagesDiv = document.getElementById('messages');
                 messagesDiv.innerHTML += `<p>Sent: ${message}</p>`;
                 document.getElementById('message').value = ''; // Clear input
+            } else {
+                console.warn('Attempted to send an empty message.');
             }
         };
 
