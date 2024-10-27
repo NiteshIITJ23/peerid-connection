@@ -21,23 +21,22 @@
         let peer;
         let conn;
 
-        // Function to initialize Peer
+        // Initialize Peer with a public STUN server
         function initializePeer() {
-            if (typeof Peer === 'undefined') {
-                console.error('PeerJS library not loaded. Please check the script source.');
-                return;
-            }
-
-            peer = new Peer(); // Generates a new Peer ID
+            peer = new Peer({
+                config: {
+                    'iceServers': [
+                        { 'urls': 'stun:stun.l.google.com:19302' } // Using a public STUN server
+                    ]
+                }
+            });
 
             peer.on('open', id => {
                 console.log('My peer ID is: ' + id);
                 document.getElementById('peerId').value = id; // Display own Peer ID
-                console.log('Copy this Peer ID to connect another device.');
             });
 
             peer.on('connection', connection => {
-                console.log('Connection established with another peer.');
                 conn = connection;
                 setupConnection();
             });
@@ -47,23 +46,21 @@
             });
         }
 
-        // Function to connect to another peer
+        // Connect to another peer
         document.getElementById('connectBtn').onclick = () => {
             const peerIdToConnect = document.getElementById('connectPeerId').value;
             conn = peer.connect(peerIdToConnect);
             setupConnection();
         };
 
-        // Function to set up connection handling
+        // Setup connection handling
         function setupConnection() {
             conn.on('open', () => {
-                console.log('Connection is open. You can now send messages.');
                 document.getElementById('sendBtn').disabled = false;
 
                 conn.on('data', (data) => {
                     const messagesDiv = document.getElementById('messages');
                     messagesDiv.innerHTML += `<p>Received: ${data}</p>`;
-                    console.log('Received message:', data);
                 });
             });
 
@@ -72,23 +69,18 @@
             });
         }
 
-        // Send button functionality
+        // Send message
         document.getElementById('sendBtn').onclick = () => {
             const message = document.getElementById('message').value;
-            if (!message) {
-                console.error('Cannot send an empty message.');
-                alert('Please enter a message to send.');
-                return;
+            if (message) {
+                conn.send(message);
+                const messagesDiv = document.getElementById('messages');
+                messagesDiv.innerHTML += `<p>Sent: ${message}</p>`;
+                document.getElementById('message').value = ''; // Clear input
             }
-
-            conn.send(message);
-            const messagesDiv = document.getElementById('messages');
-            messagesDiv.innerHTML += `<p>Sent: ${message}</p>`;
-            console.log('Sent message:', message);
-            document.getElementById('message').value = ''; // Clear input after sending
         };
 
-        // Initialize the peer on page load
+        // Initialize on page load
         window.onload = initializePeer;
     </script>
 </body>
